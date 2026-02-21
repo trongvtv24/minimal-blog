@@ -1,0 +1,57 @@
+{
+    "meta": {
+        "schema_version": "1.1.0",
+        "awf_version": "4.0.2"
+    },
+    "project": {
+        "name": "Minimal Focus Blog",
+        "type": "Next.js Web Application",
+        "status": "In Development"
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "Next.js 15+ (App Router)",
+            "styling": "Tailwind CSS 4 + CSS Variables",
+            "language": "TypeScript"
+        },
+        "content": {
+            "format": "MDX",
+            "parser": "next-mdx-remote",
+            "frontmatter": "gray-matter"
+        },
+        "features": [
+            "Responsive Blog Listing",
+            "Instant Search",
+            "Reading Time Calculation",
+            "Facebook Share integration",
+            "Facebook Comments integration"
+        ]
+    },
+    "database_schema": {
+        "summary": "File-based content using MDX files in the /content directory.",
+        "tables": [],
+        "relationships_explained": "Static files are loaded and parsed at runtime."
+    },
+    "api_endpoints": [
+        {
+            "path": "/blog/[slug]",
+            "explained": "Dynamic route for displaying blog posts"
+        }
+    ],
+    "business_rules": [
+        "Content width is capped at 720px for optimal readability",
+        "Spacing scale follows multiples of 4px",
+        "Main font is Inter"
+    ],
+    "knowledge_items": {
+        "patterns": [
+            "Client-side SDK loading for Facebook features to avoid hydration mismatch"
+        ],
+        "gotchas": [
+            "React Hooks dependency warning with debounce functions inside components (fixed by moving outside)"
+        ],
+        "conventions": [
+            "Design tokens defined in globals.css as CSS Variables"
+        ]
+    }
+}
