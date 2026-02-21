@@ -1,0 +1,54 @@
+---
+title: "Tối ưu hiệu năng web với Core Web Vitals"
+slug: "toi-uu-core-web-vitals"
+date: "2026-01-28"
+excerpt: "LCP, FID, CLS — ba chỉ số Google dùng để đánh giá trải nghiệm người dùng, và cách cải thiện chúng cho website của bạn."
+tags: ["performance", "seo", "web-vitals"]
+draft: false
+---
+
+## Core Web Vitals là gì?
+
+Google giới thiệu Core Web Vitals như bộ chỉ số đo lường trải nghiệm người dùng thực tế:
+
+- **LCP** (Largest Contentful Paint): Tốc độ tải nội dung lớn nhất — mục tiêu < 2.5s
+- **FID** (First Input Delay): Thời gian phản hồi tương tác đầu tiên — mục tiêu < 100ms
+- **CLS** (Cumulative Layout Shift): Độ dịch chuyển layout — mục tiêu < 0.1
+
+## Tại sao quan trọng?
+
+Core Web Vitals ảnh hưởng đến:
+
+1. **SEO Ranking**: Google dùng làm tín hiệu xếp hạng
+2. **User Experience**: người dùng rời trang nếu chậm > 3s
+3. **Conversion Rate**: mỗi giây chậm = giảm 7% conversion
+
+## Cải thiện LCP
+
+### Nguyên nhân LCP chậm
+- Hình ảnh lớn, chưa tối ưu
+- Font blocking render
+- JavaScript blocking main thread
+
+### Giải pháp
+- Dùng `next/image` với lazy loading
+- Preload font quan trọng
+- Giảm JS bundle bằng code splitting
+
+## Giảm CLS
+
+CLS là vấn đề phổ biến nhất:
+
+- Luôn set `width` và `height` cho images
+- Tránh inject content above the fold
+- Dùng `font-display: swap` cẩn thận
+
+## Công cụ đo lường
+
+- **Lighthouse**: trong Chrome DevTools
+- **PageSpeed Insights**: từ Google
+- **Web Vitals Extension**: real-time monitoring
+
+## Kết luận
+
+Core Web Vitals không chỉ là số liệu kỹ thuật — nó phản ánh trải nghiệm thực sự của người dùng. Hãy đo lường trước, tối ưu sau, và đo lại.

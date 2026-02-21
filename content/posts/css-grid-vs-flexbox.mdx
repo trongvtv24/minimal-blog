@@ -1,0 +1,75 @@
+---
+title: "CSS Grid và Flexbox: Khi nào dùng cái nào?"
+slug: "css-grid-vs-flexbox"
+date: "2026-01-25"
+excerpt: "Phân biệt rõ ràng giữa CSS Grid và Flexbox, cách kết hợp chúng để xây dựng layout linh hoạt và responsive."
+tags: ["css", "layout", "frontend"]
+draft: false
+---
+
+## Hiểu lầm phổ biến
+
+Nhiều developer nghĩ CSS Grid thay thế Flexbox. Sai! Chúng bổ sung cho nhau:
+
+- **Flexbox**: layout 1 chiều (hàng HOẶC cột)
+- **CSS Grid**: layout 2 chiều (hàng VÀ cột)
+
+## Khi nào dùng Flexbox?
+
+Flexbox tỏa sáng khi:
+
+1. **Navigation bar**: các item nằm ngang, space-between
+2. **Card nội bộ**: sắp xếp dọc trong 1 card
+3. **Centering**: cả vertical và horizontal
+4. **Spacing đều**: gap tự nhiên giữa items
+
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  /* CTA tự đẩy xuống đáy */
+}
+
+.card__cta {
+  margin-top: auto;
+}
+```
+
+## Khi nào dùng CSS Grid?
+
+CSS Grid tốt nhất cho:
+
+1. **Page layout**: header, sidebar, main, footer
+2. **Card grid**: 2-3 cột đều nhau
+3. **Khi cần align giữa các hàng**: items cùng hàng bằng chiều cao
+
+```css
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+```
+
+## Kết hợp cả hai
+
+Cách tốt nhất: **Grid cho layout tổng thể, Flexbox cho component nội bộ**.
+
+Ví dụ: Blog card grid
+- Dùng CSS Grid cho lưới 2 cột
+- Dùng Flexbox bên trong mỗi card để CTA luôn ở đáy
+
+Đây là pattern phổ biến và hiệu quả nhất trong thực tế.
+
+## Responsive
+
+Cả hai đều hỗ trợ responsive tốt:
+
+- Grid: `repeat(auto-fit, minmax(300px, 1fr))`
+- Flexbox: `flex-wrap: wrap` + `flex-basis`
+
+Nhưng Grid thường đơn giản hơn cho layout responsive phức tạp nhờ media queries kết hợp `grid-template-columns`.
+
+## Kết luận
+
+Đừng chọn 1, hãy dùng cả 2. Hiểu rõ điểm mạnh của từng công cụ sẽ giúp bạn viết CSS sạch hơn, ít hack hơn, và dễ maintain hơn.

@@ -1,0 +1,58 @@
+---
+title: "Hướng dẫn xây dựng hệ thống spacing nhất quán cho dự án frontend"
+slug: "he-thong-spacing-nhat-quan"
+date: "2026-02-08"
+excerpt: "Tìm hiểu cách thiết lập spacing scale chuẩn, tránh margin/padding tự do, giúp giao diện đều đặn và chuyên nghiệp."
+tags: ["css", "spacing", "frontend"]
+draft: false
+---
+
+## Vấn đề spacing hỗn loạn
+
+Bạn đã bao giờ mở DevTools và thấy margin: 17px, padding: 23px, gap: 11px chưa? Đó là dấu hiệu của "spacing chaos" — khi mỗi developer tự chọn số magic cho riêng mình.
+
+Hậu quả rất rõ: giao diện trông không chuyên nghiệp, dù từng component riêng lẻ có thể đẹp.
+
+## Spacing scale chuẩn
+
+Giải pháp là chỉ dùng **một bộ giá trị cố định**:
+
+```
+4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px
+```
+
+Mọi margin, padding, gap trong dự án đều phải nằm trong bộ giá trị này. Không ngoại lệ.
+
+## Cách triển khai
+
+### CSS Variables
+
+Định nghĩa trong `:root`:
+
+```css
+:root {
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+}
+```
+
+### Quy ước đặt tên
+
+Tên biến nên theo hệ số nhân 4. Ví dụ `--sp-6` = 6 × 4 = 24px. Dễ nhớ, dễ tính.
+
+## Lợi ích
+
+- **Consistency**: giao diện đều đặn mà không cần cố gắng
+- **Speed**: developer không mất thời gian chọn số
+- **Maintainability**: thay đổi 1 biến, cập nhật toàn bộ
+- **Review dễ hơn**: chỉ cần kiểm tra xem có dùng biến chuẩn không
+
+## Kết luận
+
+Spacing system là nền tảng của mọi design system tốt. Bắt đầu sớm, tuân thủ nghiêm ngặt, và bạn sẽ thấy kết quả ngay lập tức.

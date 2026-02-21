@@ -1,0 +1,70 @@
+---
+title: "Next.js App Router: Hướng dẫn toàn diện cho người mới bắt đầu với framework React phổ biến nhất"
+slug: "nextjs-app-router-huong-dan"
+date: "2026-02-01"
+excerpt: "Từ cài đặt đến deploy — mọi thứ bạn cần biết về Next.js 15 App Router, Server Components, và cách tổ chức dự án."
+tags: ["nextjs", "react", "tutorial"]
+draft: false
+---
+
+## Tại sao Next.js?
+
+Next.js đã trở thành framework React phổ biến nhất nhờ vào khả năng:
+
+- **Server-Side Rendering** (SSR) cho SEO tốt
+- **Static Generation** cho hiệu suất cao
+- **File-based Routing** đơn giản, trực quan
+- **API Routes** tích hợp sẵn
+
+## App Router vs Pages Router
+
+Từ Next.js 13, App Router trở thành chuẩn mới:
+
+### Ưu điểm App Router
+
+1. **Server Components mặc định**: giảm JavaScript gửi về client
+2. **Nested Layouts**: layout tái sử dụng tự nhiên
+3. **Loading & Error States**: built-in, không cần thêm thư viện
+4. **Parallel Routes**: render nhiều pages cùng lúc
+
+### Cấu trúc thư mục
+
+```
+src/
+  app/
+    layout.tsx      # Root layout
+    page.tsx        # Trang chủ
+    blog/
+      [slug]/
+        page.tsx    # Trang chi tiết
+    about/
+      page.tsx      # Trang giới thiệu
+```
+
+## Server Components
+
+Mặc định trong App Router, mọi component là Server Component. Chúng chạy trên server và gửi HTML tĩnh về client.
+
+Khi nào cần Client Component? Khi dùng:
+- `useState`, `useEffect`
+- Event handlers (onClick, onChange...)
+- Browser APIs
+
+Thêm `"use client"` ở đầu file để biến thành Client Component.
+
+## Data Fetching
+
+Trong App Router, fetch data trực tiếp trong component:
+
+```tsx
+async function BlogPage() {
+  const posts = await getAllPosts();
+  return <BlogGrid posts={posts} />;
+}
+```
+
+Không cần `getServerSideProps` hay `getStaticProps` nữa!
+
+## Kết luận
+
+App Router là tương lai của Next.js. Nếu bắt đầu dự án mới, hãy dùng App Router. Đường cong học hỏi ban đầu có thể dốc, nhưng lợi ích dài hạn rất lớn.
