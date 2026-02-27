@@ -2,82 +2,109 @@
     "meta": {
         "schema_version": "1.1.0",
         "awf_version": "3.3.0",
-        "last_updated": "2026-02-27T15:58:00Z"
+        "last_updated": "2026-02-27T16:32:00+07:00"
     },
     "project": {
-        "name": "Minimal Focus Blog",
-        "type": "Personal Blog / Content Platform",
-        "status": "Active Development - Admin Phase Completed"
+        "name": "minimal-blog-html",
+        "type": "Static Blog with BaaS",
+        "status": "In Progress (Phase 03 Next)",
+        "description": "A minimal, focus-oriented blog migrated from Next.js to pure HTML/CSS/JS with Supabase."
     },
     "tech_stack": {
         "frontend": {
-            "framework": "Next.js 16 (App Router)",
-            "library": "React 19",
-            "styling": "Vanilla CSS 4 + Tailwind CSS 4",
-            "charts": "Recharts"
+            "framework": "Vanilla JS / HTML5",
+            "styling": "Vanilla CSS (CSS Variables)",
+            "cdn_libraries": [
+                "marked.js",
+                "Chart.js"
+            ]
         },
         "backend": {
-            "auth": "NextAuth.js",
-            "orm": "Prisma 5",
-            "database": "SQLite (dev.db)"
-        },
-        "content": {
-            "format": "MDX (File-based)",
-            "folder": "content/posts"
+            "provider": "Supabase (BaaS)",
+            "database": "PostgreSQL",
+            "auth": "Supabase Auth"
         }
     },
     "database_schema": {
-        "summary": "Lưu thông tin Admin, Bình luận người dùng và Lượt xem bài viết.",
         "tables": [
             {
-                "name": "AdminUser",
-                "purpose": "Quản lý tài khoản đăng nhập admin"
+                "name": "posts",
+                "description": "Stores blog posts. Supports Markdown content and drafts.",
+                "columns": [
+                    "id",
+                    "title",
+                    "slug",
+                    "excerpt",
+                    "content",
+                    "cover_image",
+                    "tags",
+                    "draft",
+                    "created_at",
+                    "updated_at"
+                ]
             },
             {
-                "name": "Comment",
-                "purpose": "Lưu trữ bình luận user (có cơ chế duyệt)"
+                "name": "comments",
+                "description": "Stores user comments linked to posts by slug. Includes moderation status.",
+                "columns": [
+                    "id",
+                    "post_slug",
+                    "author_name",
+                    "author_email",
+                    "content",
+                    "status",
+                    "created_at"
+                ]
             },
             {
-                "name": "PageView",
-                "purpose": "Theo dõi lượt xem để hiển thị biểu đồ analytics"
+                "name": "page_views",
+                "description": "Tracks individual page views for analytics.",
+                "columns": [
+                    "id",
+                    "post_slug",
+                    "created_at"
+                ]
             }
         ],
-        "relationships_explained": "Hệ thống đơn giản, các bảng liên kết qua postSlug (dạng string)."
+        "relationships_explained": "Comments and Page Views are linked to Posts via the 'post_slug' column."
     },
     "api_endpoints": [
         {
-            "path": "/api/admin/posts",
-            "explained": "Quản lý bài viết (CRUD file MDX)"
+            "path": "supabase.from('posts')",
+            "explained": "Client-side query to fetch published posts for the homepage or all posts for the admin dashboard. Replaces GET /api/posts."
         },
         {
-            "path": "/api/comments",
-            "explained": "Gửi và lấy bình luận cho user"
+            "path": "supabase.from('comments')",
+            "explained": "Client-side query to fetch approved comments for a post or all comments for the admin moderation queue. Replaces GET /api/comments."
         },
         {
-            "path": "/api/analytics/track",
-            "explained": "Ghi nhận lượt xem bài viết"
-        },
-        {
-            "path": "/api/analytics/stats",
-            "explained": "Lấy thống kê views/comments cho Dashboard"
+            "path": "supabase.rpc('get_daily_views')",
+            "explained": "RPC call to a PostgreSQL function returning aggregated view data for Chart.js. Replaces GET /api/admin/analytics."
         }
     ],
+    "business_rules": [
+        "Public access is restricted to posts with draft=false and comments with status='approved'. Enforced via RLS.",
+        "Comment submission is open to external users. All new comments are created with status='pending'.",
+        "Post view counting triggers silently on every page load of post.html."
+    ],
     "features": [
-        "MDX Blog Engine",
-        "Admin Dashboard",
-        "Native Comments System",
-        "Traffic Analytics with Charts",
-        "User Moderation Flow"
+        "Admin Dashboard with Auth Guard",
+        "Markdown content authoring and rendering",
+        "Native Comment Moderation System",
+        "View Analytics Dashboard (Chart.js)"
     ],
     "knowledge_items": {
         "patterns": [
-            "Route Groups (blog) vs admin",
-            "Prisma singleton in Next.js",
-            "File-based MDX editing via API"
+            "Client-side Row Level Security (RLS)",
+            "CDN Library integration without build tools",
+            "Vanilla DOM manipulation for Layout Wrapping"
         ],
         "gotchas": [
-            "Prisma 7 compatibility issue (downgraded to Prisma 5)",
-            "Layout inheritance from RootLayout fixed by route groups"
+            "Supabase Anon Key is safe to expose client-side ONLY if RLS is strictly configured.",
+            "The 'marked.js' library must be loaded synchronously via script tag before 'post.js' can parse markdown content."
+        ],
+        "conventions": [
+            "HTML files are served relatively. API access goes strictly through supabase.js singleton."
         ]
     }
 }

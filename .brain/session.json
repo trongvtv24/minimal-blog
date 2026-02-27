@@ -1,59 +1,71 @@
 {
-    "updated_at": "2026-02-27T15:59:00Z",
+    "updated_at": "2026-02-27T16:32:00+07:00",
     "working_on": {
-        "feature": "Admin Dashboard & Knowledge Persistence",
-        "task": "Completed /save-brain workflow",
-        "status": "Done",
+        "feature": "HTML + Supabase Migration",
+        "current_plan_path": "d:\\AntiGravity\\minimal-blog-1\\plans\\260227-1603-html-supabase-migration\\",
+        "current_phase": "phase-03",
+        "task": "Test live data connection and test public blog functionality",
+        "status": "pending",
         "files": [
-            "src/app/admin/*",
-            "src/app/api/*",
-            "docs/*",
-            ".brain/*"
+            "minimal-blog-html/index.html",
+            "minimal-blog-html/js/posts.js"
         ],
-        "blockers": [],
-        "notes": "Hệ thống Admin đã vận hành tốt, docs đã được tạo đầy đủ."
+        "blockers": [
+            "Awaiting User to finish Supabase Setup and DB Table Creation"
+        ],
+        "notes": "Transitioned completely out of Next.js into Vanilla HTML/JS structure."
     },
     "pending_tasks": [
         {
-            "task": "Tối ưu hóa SEO cho Dashboard",
-            "priority": "low"
+            "task": "Test Homepage Post Listing",
+            "priority": "high",
+            "notes": "Ensure posts render correctly from Supabase."
         },
         {
-            "task": "Thêm tính năng upload ảnh trong editor",
-            "priority": "medium"
+            "task": "Test Post Detail Page",
+            "priority": "high",
+            "notes": "Verify Markdown parsing and view tracking."
         },
         {
-            "task": "Phân trang (Pagination) cho danh sách bài viết",
-            "priority": "medium"
+            "task": "Run data migration script",
+            "priority": "high",
+            "notes": "Migrate existing MDX files via scripts/migrate-mdx.mjs."
         }
     ],
     "recent_changes": [
         {
-            "timestamp": "2026-02-27T15:00:00Z",
-            "type": "Major Feature",
-            "description": "Implemented complete Admin Dashboard and Native Comment System",
+            "timestamp": "2026-02-27T16:10:00+07:00",
+            "type": "feature",
+            "description": "Scaffolded HTML/JS project structure and integrated Supabase JS Client.",
             "files": [
-                "src/app/admin",
-                "src/app/api",
-                "prisma/schema.prisma"
+                "minimal-blog-html/js/*",
+                "minimal-blog-html/*.html",
+                "minimal-blog-html/admin/*.html"
+            ]
+        },
+        {
+            "timestamp": "2026-02-27T16:21:00+07:00",
+            "type": "feature",
+            "description": "Injected user-provided Supabase credentials and stripped Tailwind from style.css.",
+            "files": [
+                "minimal-blog-html/js/supabase.js",
+                "minimal-blog-html/style.css"
             ]
         }
     ],
-    "errors_encountered": [
-        {
-            "error": "Blog Header/Footer showing in Admin",
-            "solution": "Restructured into route groups (blog) and admin",
-            "resolved": true
-        }
-    ],
+    "errors_encountered": [],
     "decisions_made": [
         {
-            "decision": "Use SQLite + Prisma 5",
-            "reason": "Simplicity for file-based blog engine"
+            "decision": "Use Supabase RLS instead of an API server.",
+            "reason": "Allows direct client-side querying from static HTML files securely."
         },
         {
-            "decision": "Route Groups for layout separation",
-            "reason": "Isolation of Admin UI from Blog UI"
+            "decision": "Use marked.js and Chart.js via CDN.",
+            "reason": "Avoids needing to set up Webpack or Vite for a pure HTML project."
+        },
+        {
+            "decision": "Implement layout.js for Header/Footer.",
+            "reason": "Replaces Next.js <Layout> component for Vanilla HTML, using JS innerHTML injection."
         }
     ]
 }

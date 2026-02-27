@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimal Focus — Blog tối giản, tập trung nội dung</title>
+  <meta name="description" content="Blog tối giản với bố cục đều đặn, cân đối, giúp bạn tập trung vào nội dung. Chia sẻ kiến thức về thiết kế web, frontend, và trải nghiệm người dùng." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Bỏ qua đến nội dung chính</a>
+
+  <div id="header"></div>
+
+  <main id="main-content" class="home-container">
+    <section class="home-hero">
+      <h1>Bài viết</h1>
+      <p>Chia sẻ kiến thức về thiết kế web, frontend và trải nghiệm người dùng.</p>
+    </section>
+
+    <div class="search-bar-wrapper">
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Tìm kiếm bài viết..."
+        class="search-input"
+        aria-label="Tìm kiếm bài viết"
+      />
+    </div>
+
+    <div id="posts-grid" class="posts-grid">
+      <p id="posts-loading" style="color: var(--muted); text-align: center; padding: 2rem 0">Đang tải bài viết...</p>
+    </div>
+
+    <p id="no-results" class="no-results" style="display:none">Không tìm thấy bài viết nào phù hợp.</p>
+  </main>
+
+  <div id="footer"></div>
+
+  <script type="module">
+    import { mountLayout } from './js/layout.js'
+    import { loadPosts } from './js/posts.js'
+
+    mountLayout()
+    loadPosts()
+  </script>
+</body>
+</html>

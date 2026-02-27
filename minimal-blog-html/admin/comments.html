@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý bình luận — Minimal Focus Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <div id="admin-layout"></div>
+
+    <script type="module">
+        import { requireAdmin, signOut } from '../js/auth.js'
+        import { supabase } from '../js/supabase.js'
+
+        window.handleSignOut = async () => { await signOut() }
+        window.updateComment = updateComment
+        window.deleteComment = deleteComment
+
+        const session = await requireAdmin()
+        if (!session) throw new Error('Not authenticated')
+
+        const userName = session.user?.email?.split('@')[0] || 'Admin'
+        let currentFilter = 'all'
+
+        document.getElementById('admin-layout').innerHTML = buildLayout(userName, 'comments', '<p style="color:var(--muted)">Đang tải...</p>')
+
+        await loadComments()
+
+        // Expose for tab buttons
+        window.setFilter = async (filter) => {
+            currentFilter = filter
+            await loadComments()
+        }
+
+        async function loadComments() {
+            let query = supabase.from('comments').select('*').order('created_at', { ascending: false })
+            if (currentFilter !== 'all') query = query.eq('status', currentFilter)
+
+            const { data: comments, error } = await query
+            if (error) { document.getElementById('admin-page-content').innerHTML = '<p style="color:red">Lỗi tải bình luận.</p>'; return }
+
+            const { count: pendingCount } = await supabase.from('comments').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+
+            document.getElementById('admin-page-content').innerHTML = buildCommentsPage(comments || [], pendingCount || 0)
+        }
+
+        async function updateComment(id, status) {
+            const { error } = await supabase.from('comments').update({ status }).eq('id', id)
+            if (!error) await loadComments()
+            else alert('Lỗi khi cập nhật bình luận.')
+        }
+
+        async function deleteComment(id) {
+            if (!confirm('Bạn có chắc muốn xóa bình luận này?')) return
+            const { error } = await supabase.from('comments').delete().eq('id', id)
+            if (!error) await loadComments()
+            else alert('Lỗi khi xóa bình luận.')
+        }
+
+        function buildCommentsPage(comments, pendingCount) {
+            const filters = [
+                { key: 'all', label: 'Tất cả' },
+                { key: 'pending', label: `Chờ duyệt${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
+                { key: 'approved', label: 'Đã duyệt' },
+                { key: 'rejected', label: 'Từ chối' },
+            ]
+
+            const list = comments.length === 0
+                ? '<div class="admin-empty"><p>Không có bình luận nào.</p></div>'
+                : `<div class="admin-comments-list">
+            ${comments.map(c => {
+                    const statusMap = { pending: 'admin-badge--pending', approved: 'admin-badge--published', rejected: 'admin-badge--draft' }
+                    const statusLabel = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' }
+                    return `
+                <div class="admin-comment-card">
+                  <div class="admin-comment-card__header">
+                    <div class="admin-comment-card__author">
+                      <strong>${c.author_name}</strong>
+                      <span class="admin-comment-card__email">${c.author_email}</span>
+                    </div>
+                    <div class="admin-comment-card__meta">
+                      <span class="admin-badge ${statusMap[c.status] || ''}">${statusLabel[c.status] || c.status}</span>
+                      <span class="admin-comment-card__date">${new Date(c.created_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                  <p class="admin-comment-card__content">${c.content}</p>
+                  <div class="admin-comment-card__footer">
+                    <span class="admin-comment-card__post">Bài viết: <strong>${c.post_slug}</strong></span>
+                    <div class="admin-comment-card__actions">
+                      ${c.status !== 'approved' ? `<button onclick="updateComment('${c.id}', 'approved')" class="admin-btn admin-btn--sm admin-btn--success">✅ Duyệt</button>` : ''}
+                      ${c.status !== 'rejected' ? `<button onclick="updateComment('${c.id}', 'rejected')" class="admin-btn admin-btn--sm admin-btn--warning">❌ Từ chối</button>` : ''}
+                      <button onclick="deleteComment('${c.id}')" class="admin-btn admin-btn--sm admin-btn--danger">🗑️ Xóa</button>
+                    </div>
+                  </div>
+                </div>
+              `
+                }).join('')}
+          </div>`
+
+            return `
+        <h1 class="admin-page__title">Quản lý bình luận</h1>
+        <div class="admin-tabs">
+          ${filters.map(f => `
+            <button onclick="setFilter('${f.key}')" class="admin-tab ${currentFilter === f.key ? 'admin-tab--active' : ''}">
+              ${f.label}
+            </button>
+          `).join('')}
+        </div>
+        ${list}
+      `
+        }
+
+        function buildLayout(name, activePage, content) {
+            const links = [
+                { href: '/admin/index.html', id: 'dashboard', icon: '▣', label: 'Dashboard' },
+                { href: '/admin/posts.html', id: 'posts', icon: '≡', label: 'Bài viết' },
+                { href: '/admin/comments.html', id: 'comments', icon: '◻', label: 'Bình luận' },
+            ]
+            return `<div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div class="admin-sidebar__header"><a href="/admin/index.html" class="admin-sidebar__logo"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="currentColor"/><path d="M5 10L9 14L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Minimal Focus</a></div>
+          <nav class="admin-sidebar__nav">${links.map(l => `<a href="${l.href}" class="admin-sidebar__link ${activePage === l.id ? 'active' : ''}">${l.icon} ${l.label}</a>`).join('')}</nav>
+          <div class="admin-sidebar__footer"><a href="/" target="_blank" class="admin-sidebar__link">↗ Xem Blog</a><button onclick="handleSignOut()" class="admin-sidebar__logout">⇥ Đăng xuất</button></div>
+        </aside>
+        <main class="admin-main">
+          <header class="admin-header"><div class="admin-header__user"><span class="admin-header__avatar">${name.charAt(0).toUpperCase()}</span><span class="admin-header__name">${name}</span></div></header>
+          <div class="admin-content" id="admin-page-content">${content}</div>
+        </main>
+      </div>`
+        }
+    </script>
+</body>
+
+</html>

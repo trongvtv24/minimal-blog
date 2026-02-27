@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Minimal Focus Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div id="admin-layout"></div>
+
+    <script type="module">
+        import { requireAdmin, signOut } from '../js/auth.js'
+        import { supabase } from '../js/supabase.js'
+
+        window.handleSignOut = async () => { await signOut() }
+
+        const session = await requireAdmin()
+        if (!session) throw new Error('Not authenticated')
+
+        // Render sidebar layout
+        const adminName = session.user?.email?.split('@')[0] || 'Admin'
+        const currentPage = 'dashboard'
+        document.getElementById('admin-layout').innerHTML = buildAdminLayout(adminName, currentPage, '')
+        document.getElementById('admin-page-content').innerHTML = '<p style="color:var(--muted)">Đang tải dữ liệu...</p>'
+
+        // Fetch all stats in parallel
+        const [
+            { count: totalViews },
+            { count: viewsToday },
+            { count: totalPosts },
+            { count: pendingComments },
+            { count: totalComments },
+            { data: viewsByDay }
+        ] = await Promise.all([
+            supabase.from('page_views').select('*', { count: 'exact', head: true }),
+            supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0]),
+            supabase.from('posts').select('*', { count: 'exact', head: true }),
+            supabase.from('comments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('comments').select('*', { count: 'exact', head: true }),
+            supabase.rpc('get_daily_views', { days: 30 }).catch(() => ({ data: [] }))
+        ])
+
+        // Top posts by views
+        const { data: topPostsRaw } = await supabase
+            .from('page_views')
+            .select('post_slug')
+
+        const topPostsMap = {}
+            ; (topPostsRaw || []).forEach(v => {
+                topPostsMap[v.post_slug] = (topPostsMap[v.post_slug] || 0) + 1
+            })
+        const topPosts = Object.entries(topPostsMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([slug, views]) => ({ slug, views }))
+
+        document.getElementById('admin-page-content').innerHTML = buildDashboard({
+            totalViews: totalViews || 0,
+            viewsToday: viewsToday || 0,
+            totalPosts: totalPosts || 0,
+            pendingComments: pendingComments || 0,
+            totalComments: totalComments || 0,
+            viewsByDay: viewsByDay || [],
+            topPosts
+        })
+
+        // Render charts using Chart.js
+        renderLineChart(viewsByDay || [])
+        renderBarChart(topPosts)
+
+        function buildDashboard(stats) {
+            return `
+        <h1 class="admin-page__title">Dashboard</h1>
+        <div class="admin-stats">
+          <div class="admin-stat-card">
+            <div class="admin-stat-card__icon admin-stat-card__icon--views">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/></svg>
+            </div>
+            <div><p class="admin-stat-card__value">${stats.viewsToday}</p><p class="admin-stat-card__label">Lượt xem hôm nay</p></div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card__icon admin-stat-card__icon--total">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" fill="currentColor"/></svg>
+            </div>
+            <div><p class="admin-stat-card__value">${stats.totalPosts}</p><p class="admin-stat-card__label">Tổng bài viết</p></div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card__icon admin-stat-card__icon--comments">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14h-6.83L12 17.17 10.83 16H4V4h16v12z" fill="currentColor"/></svg>
+            </div>
+            <div><p class="admin-stat-card__value">${stats.pendingComments}</p><p class="admin-stat-card__label">Chờ duyệt</p></div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card__icon admin-stat-card__icon--allviews">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+            </div>
+            <div><p class="admin-stat-card__value">${stats.totalViews}</p><p class="admin-stat-card__label">Tổng lượt xem</p></div>
+          </div>
+        </div>
+
+        <div class="admin-charts">
+          <div class="admin-chart-card">
+            <h2 class="admin-chart-card__title">Lượt xem 30 ngày qua</h2>
+            <div class="admin-chart-card__body" style="padding: 1rem">
+              <canvas id="lineChart" height="280"></canvas>
+            </div>
+          </div>
+          <div class="admin-chart-card">
+            <h2 class="admin-chart-card__title">Top bài viết</h2>
+            <div class="admin-chart-card__body" style="padding: 1rem">
+              ${stats.topPosts.length === 0
+                    ? '<p class="admin-chart-card__empty">Chưa có dữ liệu</p>'
+                    : '<canvas id="barChart" height="280"></canvas>'
+                }
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-quicklinks">
+          <a href="/admin/posts.html" class="admin-quicklink">✍️ Viết bài mới</a>
+          <a href="/admin/comments.html" class="admin-quicklink">💬 Duyệt bình luận (${stats.pendingComments})</a>
+        </div>
+      `
+        }
+
+        function renderLineChart(data) {
+            const canvas = document.getElementById('lineChart')
+            if (!canvas || !data.length) return
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => {
+                        const dt = new Date(d.date)
+                        return `${dt.getDate()}/${dt.getMonth() + 1}`
+                    }),
+                    datasets: [{
+                        label: 'Lượt xem',
+                        data: data.map(d => d.views),
+                        borderColor: '#0f766e',
+                        backgroundColor: 'rgba(15,118,110,0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxTicksLimit: 8 } },
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            })
+        }
+
+        function renderBarChart(data) {
+            const canvas = document.getElementById('barChart')
+            if (!canvas || !data.length) return
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.slug.length > 20 ? d.slug.slice(0, 20) + '…' : d.slug),
+                    datasets: [{
+                        label: 'Lượt xem',
+                        data: data.map(d => d.views),
+                        backgroundColor: '#0f766e',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true, ticks: { precision: 0 } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            })
+        }
+
+        function buildAdminLayout(name, activePage, content) {
+            const links = [
+                { href: '/admin/index.html', id: 'dashboard', icon: '▣', label: 'Dashboard' },
+                { href: '/admin/posts.html', id: 'posts', icon: '≡', label: 'Bài viết' },
+                { href: '/admin/comments.html', id: 'comments', icon: '◻', label: 'Bình luận' },
+            ]
+            return `
+        <div class="admin-layout">
+          <aside class="admin-sidebar">
+            <div class="admin-sidebar__header">
+              <a href="/admin/index.html" class="admin-sidebar__logo">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="currentColor"/><path d="M5 10L9 14L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Minimal Focus
+              </a>
+            </div>
+            <nav class="admin-sidebar__nav">
+              ${links.map(l => `
+                <a href="${l.href}" class="admin-sidebar__link ${activePage === l.id ? 'active' : ''}">
+                  <span>${l.icon}</span> ${l.label}
+                </a>`).join('')}
+            </nav>
+            <div class="admin-sidebar__footer">
+              <a href="/" target="_blank" class="admin-sidebar__link">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 14H4V4h5V2H4C2.9 2 2 2.9 2 4v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V9h-2v5zM11 2v2h2.59l-7.3 7.29 1.41 1.41L15 5.41V8h2V2h-6z" fill="currentColor"/></svg>
+                Xem Blog
+              </a>
+              <button onclick="handleSignOut()" class="admin-sidebar__logout">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13 3H11v2h2v8h-2v2h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 10l-1.41-1.41L10.17 9H2V7h8.17L7.59 4.41 9 3l5 5-5 5z" fill="currentColor"/></svg>
+                Đăng xuất
+              </button>
+            </div>
+          </aside>
+          <main class="admin-main">
+            <header class="admin-header">
+              <div class="admin-header__user">
+                <span class="admin-header__avatar">${name.charAt(0).toUpperCase()}</span>
+                <span class="admin-header__name">${name}</span>
+              </div>
+            </header>
+            <div class="admin-content" id="admin-page-content">${content}</div>
+          </main>
+        </div>
+      `
+        }
+    </script>
+</body>
+
+</html>

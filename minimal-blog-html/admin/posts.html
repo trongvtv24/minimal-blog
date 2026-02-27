@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý bài viết — Minimal Focus Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <div id="admin-layout"></div>
+
+    <script type="module">
+        import { requireAdmin, signOut } from '../js/auth.js'
+        import { supabase } from '../js/supabase.js'
+
+        window.handleSignOut = async () => { await signOut() }
+        window.deletePost = deletePost
+
+        const session = await requireAdmin()
+        if (!session) throw new Error('Not authenticated')
+
+        const userName = session.user?.email?.split('@')[0] || 'Admin'
+        document.getElementById('admin-layout').innerHTML = buildLayout(userName, 'posts', '<p style="color:var(--muted)">Đang tải...</p>')
+
+        await loadPosts()
+
+        async function loadPosts() {
+            // Lấy tất cả bài viết kể cả draft
+            const { data: posts, error } = await supabase
+                .from('posts')
+                .select('id, title, slug, tags, draft, created_at')
+                .order('created_at', { ascending: false })
+
+            // Lấy view counts
+            const { data: viewsRaw } = await supabase.from('page_views').select('post_slug')
+            const viewMap = {}
+                ; (viewsRaw || []).forEach(v => { viewMap[v.post_slug] = (viewMap[v.post_slug] || 0) + 1 })
+
+            if (error) {
+                document.getElementById('admin-page-content').innerHTML = '<p style="color:red">Lỗi tải bài viết.</p>'
+                return
+            }
+
+            const postsWithViews = (posts || []).map(p => ({ ...p, views: viewMap[p.slug] || 0 }))
+            document.getElementById('admin-page-content').innerHTML = buildPostsPage(postsWithViews)
+        }
+
+        async function deletePost(id, title) {
+            if (!confirm(`Bạn có chắc muốn xóa bài viết "${title}"?`)) return
+            const { error } = await supabase.from('posts').delete().eq('id', id)
+            if (!error) await loadPosts()
+            else alert('Lỗi khi xóa bài viết.')
+        }
+
+        function buildPostsPage(posts) {
+            const table = posts.length === 0
+                ? '<div class="admin-empty"><p>Chưa có bài viết nào.</p></div>'
+                : `<div class="admin-table-wrapper"><table class="admin-table">
+            <thead><tr><th>Tiêu đề</th><th>Ngày</th><th>Trạng thái</th><th>Lượt xem</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              ${posts.map(post => `
+                <tr>
+                  <td>
+                    <div class="admin-table__title">${post.title}</div>
+                    <div class="admin-table__meta">
+                      ${(post.tags || []).map(t => `<span class="admin-tag">${t}</span>`).join('')}
+                    </div>
+                  </td>
+                  <td class="admin-table__date">${new Date(post.created_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                  <td><span class="admin-badge ${post.draft ? 'admin-badge--draft' : 'admin-badge--published'}">${post.draft ? 'Bản nháp' : 'Đã đăng'}</span></td>
+                  <td class="admin-table__views">${post.views}</td>
+                  <td>
+                    <div class="admin-table__actions">
+                      <a href="edit-post.html?id=${post.id}" class="admin-btn admin-btn--sm admin-btn--ghost">Sửa</a>
+                      <a href="../post.html?slug=${post.slug}" target="_blank" class="admin-btn admin-btn--sm admin-btn--ghost">Xem</a>
+                      <button onclick="deletePost('${post.id}', '${post.title.replace(/'/g, "\\'")}')" class="admin-btn admin-btn--sm admin-btn--danger">Xóa</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table></div>`
+
+            return `
+        <div class="admin-page__header">
+          <h1 class="admin-page__title">Bài viết</h1>
+          <a href="edit-post.html" class="admin-btn admin-btn--primary">+ Viết bài mới</a>
+        </div>
+        ${table}
+      `
+        }
+
+        function buildLayout(name, activePage, content) {
+            const links = [
+                { href: '/admin/index.html', id: 'dashboard', icon: '▣', label: 'Dashboard' },
+                { href: '/admin/posts.html', id: 'posts', icon: '≡', label: 'Bài viết' },
+                { href: '/admin/comments.html', id: 'comments', icon: '◻', label: 'Bình luận' },
+            ]
+            return `<div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div class="admin-sidebar__header"><a href="/admin/index.html" class="admin-sidebar__logo"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="currentColor"/><path d="M5 10L9 14L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Minimal Focus</a></div>
+          <nav class="admin-sidebar__nav">${links.map(l => `<a href="${l.href}" class="admin-sidebar__link ${activePage === l.id ? 'active' : ''}">${l.icon} ${l.label}</a>`).join('')}</nav>
+          <div class="admin-sidebar__footer">
+            <a href="/" target="_blank" class="admin-sidebar__link">↗ Xem Blog</a>
+            <button onclick="handleSignOut()" class="admin-sidebar__logout">⇥ Đăng xuất</button>
+          </div>
+        </aside>
+        <main class="admin-main">
+          <header class="admin-header"><div class="admin-header__user"><span class="admin-header__avatar">${name.charAt(0).toUpperCase()}</span><span class="admin-header__name">${name}</span></div></header>
+          <div class="admin-content" id="admin-page-content">${content}</div>
+        </main>
+      </div>`
+        }
+    </script>
+</body>
+
+</html>

@@ -1,27 +1,31 @@
-# Changelog - Minimal Focus Blog
+# Changelog
 
-Tất cả các thay đổi quan trọng của dự án sẽ được ghi nhận tại đây.
+All notable changes to this project will be documented in this file.
+
+## [2026-02-27] - Phase 01 & 02: HTML + Supabase Migration
+
+### Added
+- **New Project Structure**: Created `minimal-blog-html` directory for the static site version.
+- **Supabase Integration**: Set up Supabase as the BaaS backend, replacing SQLite and Prisma.
+- **SQL Schema**: Added `scripts/supabase-setup.sql` to define `posts`, `comments`, and `page_views` tables with RLS policies.
+- **CDN Libraries**: Integrated `marked.js` for Markdown rendering and `Chart.js` for admin analytics via CDN.
+- **Static Pages**: Created core static HTML files (`index.html`, `post.html`, `admin/login.html`, `admin/index.html`, `admin/posts.html`, `admin/edit-post.html`, `admin/comments.html`).
+- **Core JS Modules**: Implemented `js/supabase.js`, `js/auth.js`, `js/layout.js`, `js/posts.js`, and `js/post.js`.
+- **Migration Script**: Added `scripts/migrate-mdx.mjs` to seamlessly port existing `.mdx` content to Supabase.
+
+### Changed
+- **CSS**: Reused `globals.css` as `style.css`, stripping Tailwind directives for pure Vanilla CSS compatibility.
+- **Layout Architecture**: Abstracted Header and Footer logic into a JavaScript injection component (`mountLayout()`) instead of server-side layout wrapping.
+
+### Deprecated
+- **Next.js Backend**: Server-rendered routing (`app/`), NextAuth (`SessionProvider`), and Prisma Client are no longer used in the new HTML structure.
 
 ---
 
-## [2026-02-27] - Admin Dashboard & Native Comments
-Hôm nay chúng ta đã thực hiện một bước tiến lớn trong việc quản lý blog.
+## [2026-02-27] - Native Content Migration
 
-### 🚀 Added
-- **Admin Dashboard**: Giao diện quản trị hoàn chỉnh tại `/admin`.
-- **Authentication**: Setup NextAuth.js bảo vệ các route quản trị.
-- **Database**: Tích hợp Prisma & SQLite (`dev.db`).
-- **Post Management**: Tính năng Tạo, Sửa, Xóa bài viết trực tiếp từ giao diện Admin.
-- **Native Comment System**: Hệ thống bình luận nội bộ thay thế Facebook SDK. 
-- **Analytics**: Tự động đếm lượt xem bài viết và hiển thị biểu đồ trên Dashboard.
-- **Charts**: Sử dụng Recharts để hiển thị xu hướng lượt xem.
-
-### 🔧 Changed
-- **Router Structure**: Chuyển các trang public vào route group `(blog)` để tách biệt layout với Admin.
-- **Styling**: Cập nhật `globals.css` với hơn 600 dòng CSS cho Admin và hệ thống bình luận.
-- **Header/Footer**: Chỉ hiển thị trên các trang blog công khai, ẩn ở trang Admin.
-
-### 📁 Technical Details
-- Prisma schema với các bảng: `AdminUser`, `Comment`, `PageView`.
-- API routes mới trong `src/app/api/admin/*` và `src/app/api/comments/*`.
-- Tích hợp `bcrypt` để bảo mật mật khẩu admin.
+### Added
+- **Admin Layout Restructuring**: Successfully isolated public blog views from the admin dashboard logic using Next.js route groups `(blog)`.
+- **Native Comments System**: Added `ShareAndComments.tsx` component to handle form submissions directly into the SQLite DB.
+- **Analytics Tracking**: Added `PageViewTracker.tsx` to automatically track post views on load.
+- **Admin Dashboard**: Created dashboard with Recharts, post listing, MDX post editor, and comment moderation views.

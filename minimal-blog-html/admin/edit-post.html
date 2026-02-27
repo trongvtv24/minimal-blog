@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bài viết — Minimal Focus Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <div id="admin-layout"></div>
+
+    <script type="module">
+        import { requireAdmin, signOut } from '../js/auth.js'
+        import { supabase } from '../js/supabase.js'
+
+        window.handleSignOut = async () => { await signOut() }
+
+        const session = await requireAdmin()
+        if (!session) throw new Error('Not authenticated')
+
+        const userName = session.user?.email?.split('@')[0] || 'Admin'
+        const postId = new URLSearchParams(window.location.search).get('id')
+        const isEdit = !!postId
+
+        document.getElementById('admin-layout').innerHTML = buildLayout(userName, 'posts', '<p style="color:var(--muted)">Đang tải...</p>')
+
+        let existingPost = null
+        if (isEdit) {
+            const { data } = await supabase.from('posts').select('*').eq('id', postId).single()
+            existingPost = data
+        }
+
+        document.getElementById('admin-page-content').innerHTML = buildEditor(existingPost)
+
+        // Form submit
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            await savePost(false)
+        })
+
+        document.getElementById('saveDraftBtn').addEventListener('click', () => savePost(true))
+
+        async function savePost(isDraft) {
+            const form = document.getElementById('postForm')
+            const title = form.title.value.trim()
+            const content = form.content.value.trim()
+
+            if (!title || !content) {
+                alert('Vui lòng nhập tiêu đề và nội dung.')
+                return
+            }
+
+            const slug = form.slug.value.trim() || generateSlug(title)
+            const tags = form.tags.value.split(',').map(t => t.trim()).filter(Boolean)
+
+            const payload = {
+                title, slug, content, tags,
+                excerpt: form.excerpt.value.trim() || '',
+                cover_image: form.cover_image.value.trim() || null,
+                draft: isDraft,
+                updated_at: new Date().toISOString()
+            }
+
+            let error
+            if (isEdit) {
+                ; ({ error } = await supabase.from('posts').update(payload).eq('id', postId))
+            } else {
+                ; ({ error } = await supabase.from('posts').insert({ ...payload, created_at: new Date().toISOString() }))
+            }
+
+            if (error) {
+                alert(error.code === '23505' ? 'Slug đã tồn tại, vui lòng đổi slug khác.' : 'Lỗi khi lưu bài viết.')
+            } else {
+                window.location.href = '/admin/posts.html'
+            }
+        }
+
+        function generateSlug(title) {
+            return title.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-').replace(/-+/g, '-').trim()
+        }
+
+        function buildEditor(post) {
+            return `
+        <div class="admin-page__header">
+          <h1 class="admin-page__title">${isEdit ? 'Chỉnh sửa bài viết' : 'Viết bài mới'}</h1>
+          <div class="admin-page__actions">
+            <button id="saveDraftBtn" type="button" class="admin-btn admin-btn--ghost">Lưu nháp</button>
+            <button form="postForm" type="submit" class="admin-btn admin-btn--primary">
+              ${isEdit ? 'Cập nhật' : 'Đăng bài'}
+            </button>
+          </div>
+        </div>
+        <form id="postForm">
+          <div class="admin-editor">
+            <div class="admin-editor__fields">
+              <div class="admin-editor__field">
+                <label>Tiêu đề *</label>
+                <input name="title" type="text" placeholder="Nhập tiêu đề bài viết..." class="admin-editor__title-input" value="${post?.title || ''}" required
+                  oninput="if(!this.form.slug.dataset.edited) this.form.slug.value = '${!post ? "' + generateSlug(this.value) + '" : post.slug}'" />
+              </div>
+              <div class="admin-editor__row">
+                <div class="admin-editor__field">
+                  <label>Slug</label>
+                  <input name="slug" type="text" placeholder="tu-dong-tao-tu-tieu-de" value="${post?.slug || ''}"
+                    ${isEdit ? 'class="admin-editor__disabled" readonly' : ''}
+                    oninput="this.dataset.edited=true" />
+                </div>
+                <div class="admin-editor__field">
+                  <label>Tags (phân cách bằng dấu phẩy)</label>
+                  <input name="tags" type="text" placeholder="nextjs, react, css" value="${(post?.tags || []).join(', ')}" />
+                </div>
+              </div>
+              <div class="admin-editor__field">
+                <label>Mô tả ngắn</label>
+                <textarea name="excerpt" rows="2" placeholder="Mô tả ngắn gọn về bài viết...">${post?.excerpt || ''}</textarea>
+              </div>
+              <div class="admin-editor__field">
+                <label>Cover Image URL</label>
+                <input name="cover_image" type="text" placeholder="https://example.com/image.jpg" value="${post?.cover_image || ''}" />
+              </div>
+            </div>
+            <div class="admin-editor__content">
+              <label>Nội dung (Markdown) *</label>
+              <textarea name="content" class="admin-editor__textarea" placeholder="Viết nội dung bài viết bằng Markdown...">${post?.content || ''}</textarea>
+            </div>
+          </div>
+        </form>
+      `
+        }
+
+        function buildLayout(name, activePage, content) {
+            const links = [
+                { href: '/admin/index.html', id: 'dashboard', icon: '▣', label: 'Dashboard' },
+                { href: '/admin/posts.html', id: 'posts', icon: '≡', label: 'Bài viết' },
+                { href: '/admin/comments.html', id: 'comments', icon: '◻', label: 'Bình luận' },
+            ]
+            return `<div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div class="admin-sidebar__header"><a href="/admin/index.html" class="admin-sidebar__logo"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="4" fill="currentColor"/><path d="M5 10L9 14L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Minimal Focus</a></div>
+          <nav class="admin-sidebar__nav">${links.map(l => `<a href="${l.href}" class="admin-sidebar__link ${activePage === l.id ? 'active' : ''}">${l.icon} ${l.label}</a>`).join('')}</nav>
+          <div class="admin-sidebar__footer"><a href="/" target="_blank" class="admin-sidebar__link">↗ Xem Blog</a><button onclick="handleSignOut()" class="admin-sidebar__logout">⇥ Đăng xuất</button></div>
+        </aside>
+        <main class="admin-main">
+          <header class="admin-header"><div class="admin-header__user"><span class="admin-header__avatar">${name.charAt(0).toUpperCase()}</span><span class="admin-header__name">${name}</span></div></header>
+          <div class="admin-content" id="admin-page-content">${content}</div>
+        </main>
+      </div>`
+        }
+    </script>
+</body>
+
+</html>
