@@ -1,20 +1,27 @@
-# Changelog
+# Changelog - Minimal Focus Blog
 
-All notable changes to this project will be documented in this file.
+Tất cả các thay đổi quan trọng của dự án sẽ được ghi nhận tại đây.
 
-## [Unreleased]
+---
 
-### Added
-- Integrated Facebook SDK for social features.
-- Added **Facebook Share** button on blog post pages.
-- Added **Facebook Comments** section below each blog post.
-- Created `ShareAndComments` client component.
+## [2026-02-27] - Admin Dashboard & Native Comments
+Hôm nay chúng ta đã thực hiện một bước tiến lớn trong việc quản lý blog.
 
-### Fixed
-- Fixed ESLint `react-hooks/exhaustive-deps` and rendering issues in `SearchBar`.
-- Fixed ESLint unescaped entities in `About` page.
-- Fixed TypeScript `any` warnings in `ShareAndComments`.
+### 🚀 Added
+- **Admin Dashboard**: Giao diện quản trị hoàn chỉnh tại `/admin`.
+- **Authentication**: Setup NextAuth.js bảo vệ các route quản trị.
+- **Database**: Tích hợp Prisma & SQLite (`dev.db`).
+- **Post Management**: Tính năng Tạo, Sửa, Xóa bài viết trực tiếp từ giao diện Admin.
+- **Native Comment System**: Hệ thống bình luận nội bộ thay thế Facebook SDK. 
+- **Analytics**: Tự động đếm lượt xem bài viết và hiển thị biểu đồ trên Dashboard.
+- **Charts**: Sử dụng Recharts để hiển thị xu hướng lượt xem.
 
-### Changed
-- Updated documentation and README with project-specific features.
-- Initial project structure setup with Next.js 15.
+### 🔧 Changed
+- **Router Structure**: Chuyển các trang public vào route group `(blog)` để tách biệt layout với Admin.
+- **Styling**: Cập nhật `globals.css` với hơn 600 dòng CSS cho Admin và hệ thống bình luận.
+- **Header/Footer**: Chỉ hiển thị trên các trang blog công khai, ẩn ở trang Admin.
+
+### 📁 Technical Details
+- Prisma schema với các bảng: `AdminUser`, `Comment`, `PageView`.
+- API routes mới trong `src/app/api/admin/*` và `src/app/api/comments/*`.
+- Tích hợp `bcrypt` để bảo mật mật khẩu admin.

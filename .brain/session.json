@@ -1,56 +1,59 @@
 {
-    "updated_at": "2026-02-21T13:35:00Z",
+    "updated_at": "2026-02-27T15:59:00Z",
     "working_on": {
-        "feature": "Post-Implementation Cleanup & Handover",
-        "task": "Saving project memory via /save-brain",
-        "status": "documenting",
+        "feature": "Admin Dashboard & Knowledge Persistence",
+        "task": "Completed /save-brain workflow",
+        "status": "Done",
         "files": [
-            ".brain/brain.json",
-            ".brain/session.json",
-            "README.md",
-            "CHANGELOG.md"
+            "src/app/admin/*",
+            "src/app/api/*",
+            "docs/*",
+            ".brain/*"
         ],
         "blockers": [],
-        "notes": "Project successfully pushed to GitHub."
+        "notes": "Hệ thống Admin đã vận hành tốt, docs đã được tạo đầy đủ."
     },
     "pending_tasks": [
         {
-            "task": "Implement Admin Dashboard for posting (as suggested in brainstorm)",
-            "priority": "high",
-            "notes": "User requested only posting functionality for admin."
+            "task": "Tối ưu hóa SEO cho Dashboard",
+            "priority": "low"
+        },
+        {
+            "task": "Thêm tính năng upload ảnh trong editor",
+            "priority": "medium"
+        },
+        {
+            "task": "Phân trang (Pagination) cho danh sách bài viết",
+            "priority": "medium"
         }
     ],
     "recent_changes": [
         {
-            "timestamp": "2026-02-21T13:20:00Z",
-            "type": "feature",
-            "description": "Added Facebook Share & Comments",
+            "timestamp": "2026-02-27T15:00:00Z",
+            "type": "Major Feature",
+            "description": "Implemented complete Admin Dashboard and Native Comment System",
             "files": [
-                "src/components/ShareAndComments.tsx",
-                "src/app/blog/[slug]/page.tsx"
-            ]
-        },
-        {
-            "timestamp": "2026-02-21T13:25:00Z",
-            "type": "fix",
-            "description": "Fixed ESLint errors in SearchBar and About page",
-            "files": [
-                "src/components/SearchBar.tsx",
-                "src/app/about/page.tsx"
+                "src/app/admin",
+                "src/app/api",
+                "prisma/schema.prisma"
             ]
         }
     ],
     "errors_encountered": [
         {
-            "error": "ESLint dependency warning in SearchBar",
-            "solution": "Extracted debounce function outside component to stabilize reference",
+            "error": "Blog Header/Footer showing in Admin",
+            "solution": "Restructured into route groups (blog) and admin",
             "resolved": true
         }
     ],
     "decisions_made": [
         {
-            "decision": "Use Facebook SDK for comments",
-            "reason": "Request by user for Facebook integration"
+            "decision": "Use SQLite + Prisma 5",
+            "reason": "Simplicity for file-based blog engine"
+        },
+        {
+            "decision": "Route Groups for layout separation",
+            "reason": "Isolation of Admin UI from Blog UI"
         }
     ]
 }

@@ -1,36 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CommentSection from './CommentSection';
 
-declare global {
-    interface Window {
-        FB?: {
-            XFBML: {
-                parse: () => void;
-            };
-        };
-    }
-}
-
-export default function ShareAndComments() {
+export default function ShareAndComments({ slug }: { slug: string }) {
     const [fullUrl, setFullUrl] = useState('');
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setFullUrl(window.location.href);
-
-        // Load Facebook SDK for comments
-        if (typeof window !== 'undefined' && !window.FB) {
-            const script = document.createElement('script');
-            script.src = "https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v19.0";
-            script.async = true;
-            script.defer = true;
-            script.crossOrigin = "anonymous";
-            document.body.appendChild(script);
-        } else if (typeof window !== 'undefined' && window.FB) {
-            // Re-parse XFBML elements on client route change
-            window.FB.XFBML.parse();
-        }
     }, []);
 
     // Prevent hydration mismatch
@@ -59,21 +37,8 @@ export default function ShareAndComments() {
                 </a>
             </div>
 
-            {/* Comments Section */}
-            <div className="w-full">
-                <h3 className="text-2xl font-bold mb-6 text-[var(--text)]">Bình luận</h3>
-
-                {/* Facebook Comments plugin layout */}
-                <div className="w-full bg-[var(--surface)] sm:p-4 sm:rounded-xl sm:border border-[var(--border)] overflow-hidden">
-                    <div
-                        className="fb-comments w-full"
-                        data-href={fullUrl}
-                        data-width="100%"
-                        data-numposts="5"
-                        data-order-by="reverse_time"
-                    ></div>
-                </div>
-            </div>
+            {/* Native Comments Section */}
+            <CommentSection slug={slug} />
         </section>
     );
 }

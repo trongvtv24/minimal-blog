@@ -1,57 +1,83 @@
 {
     "meta": {
         "schema_version": "1.1.0",
-        "awf_version": "4.0.2"
+        "awf_version": "3.3.0",
+        "last_updated": "2026-02-27T15:58:00Z"
     },
     "project": {
         "name": "Minimal Focus Blog",
-        "type": "Next.js Web Application",
-        "status": "In Development"
+        "type": "Personal Blog / Content Platform",
+        "status": "Active Development - Admin Phase Completed"
     },
     "tech_stack": {
         "frontend": {
-            "framework": "Next.js 15+ (App Router)",
-            "styling": "Tailwind CSS 4 + CSS Variables",
-            "language": "TypeScript"
+            "framework": "Next.js 16 (App Router)",
+            "library": "React 19",
+            "styling": "Vanilla CSS 4 + Tailwind CSS 4",
+            "charts": "Recharts"
+        },
+        "backend": {
+            "auth": "NextAuth.js",
+            "orm": "Prisma 5",
+            "database": "SQLite (dev.db)"
         },
         "content": {
-            "format": "MDX",
-            "parser": "next-mdx-remote",
-            "frontmatter": "gray-matter"
-        },
-        "features": [
-            "Responsive Blog Listing",
-            "Instant Search",
-            "Reading Time Calculation",
-            "Facebook Share integration",
-            "Facebook Comments integration"
-        ]
+            "format": "MDX (File-based)",
+            "folder": "content/posts"
+        }
     },
     "database_schema": {
-        "summary": "File-based content using MDX files in the /content directory.",
-        "tables": [],
-        "relationships_explained": "Static files are loaded and parsed at runtime."
+        "summary": "Lưu thông tin Admin, Bình luận người dùng và Lượt xem bài viết.",
+        "tables": [
+            {
+                "name": "AdminUser",
+                "purpose": "Quản lý tài khoản đăng nhập admin"
+            },
+            {
+                "name": "Comment",
+                "purpose": "Lưu trữ bình luận user (có cơ chế duyệt)"
+            },
+            {
+                "name": "PageView",
+                "purpose": "Theo dõi lượt xem để hiển thị biểu đồ analytics"
+            }
+        ],
+        "relationships_explained": "Hệ thống đơn giản, các bảng liên kết qua postSlug (dạng string)."
     },
     "api_endpoints": [
         {
-            "path": "/blog/[slug]",
-            "explained": "Dynamic route for displaying blog posts"
+            "path": "/api/admin/posts",
+            "explained": "Quản lý bài viết (CRUD file MDX)"
+        },
+        {
+            "path": "/api/comments",
+            "explained": "Gửi và lấy bình luận cho user"
+        },
+        {
+            "path": "/api/analytics/track",
+            "explained": "Ghi nhận lượt xem bài viết"
+        },
+        {
+            "path": "/api/analytics/stats",
+            "explained": "Lấy thống kê views/comments cho Dashboard"
         }
     ],
-    "business_rules": [
-        "Content width is capped at 720px for optimal readability",
-        "Spacing scale follows multiples of 4px",
-        "Main font is Inter"
+    "features": [
+        "MDX Blog Engine",
+        "Admin Dashboard",
+        "Native Comments System",
+        "Traffic Analytics with Charts",
+        "User Moderation Flow"
     ],
     "knowledge_items": {
         "patterns": [
-            "Client-side SDK loading for Facebook features to avoid hydration mismatch"
+            "Route Groups (blog) vs admin",
+            "Prisma singleton in Next.js",
+            "File-based MDX editing via API"
         ],
         "gotchas": [
-            "React Hooks dependency warning with debounce functions inside components (fixed by moving outside)"
-        ],
-        "conventions": [
-            "Design tokens defined in globals.css as CSS Variables"
+            "Prisma 7 compatibility issue (downgraded to Prisma 5)",
+            "Layout inheritance from RootLayout fixed by route groups"
         ]
     }
 }

@@ -3,6 +3,7 @@ import { getPostBySlug, getAllSlugs, getAdjacentPosts } from '@/lib/posts';
 import MdxContent from '@/components/MdxContent';
 import PrevNextNav from '@/components/PrevNextNav';
 import ShareAndComments from '@/components/ShareAndComments';
+import PageViewTracker from '@/components/PageViewTracker';
 import type { Metadata } from 'next';
 
 interface BlogPostPageProps {
@@ -70,8 +71,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 )}
             </header>
             <MdxContent source={post.content} />
-            <ShareAndComments />
+            <ShareAndComments slug={slug} />
             <PrevNextNav prev={prev} next={next} />
+            <PageViewTracker slug={slug} />
         </article>
     );
 }
